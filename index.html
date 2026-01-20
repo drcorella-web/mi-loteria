@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lotería de Regalos - Servidor Online</title>
+    <style>
+        :root { --puntos: #00d1b2; --fondo: #1a1a1a; --panel: #2d2d2d; }
+        body { font-family: sans-serif; background: var(--fondo); color: white; margin: 0; display: flex; }
+        .sidebar { width: 300px; background: var(--panel); height: 100vh; position: fixed; left: 0; top: 0; padding: 20px; border-right: 2px solid var(--puntos); overflow-y: auto; z-index: 100; }
+        .contenido { margin-left: 340px; padding: 20px; width: calc(100% - 380px); }
+        .seccion { display: none; }
+        .seccion.activa { display: block; }
+        .btn { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-nav { width: 100%; padding: 12px; margin-bottom: 8px; border: 1px solid var(--puntos); border-radius: 8px; background: transparent; color: white; cursor: pointer; font-weight: bold; }
+        .btn-nav.activo { background: var(--puntos); color: black; }
+        .btn-naranja { background: orange; color: black; }
+        .mesa-juego { text-align: center; background: #252525; padding: 25px; border-radius: 15px; border: 2px solid #444; }
+        
+        /* CARTA GRANDE PARA TV */
+        .carta-actual { width: 380px; height: auto; border: 8px solid white; border-radius: 15px; margin: 0 auto 20px; display: block; background: #333; object-fit: fill; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        
+        .controles-velocidad { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .btn-vel { padding: 10px 15px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold; color: white; }
+        .v-lento { background: #28a745; }
+        .v-medio { background: #ffc107; color: black; }
+        .v-rapido { background: #dc3545; }
+        .btn-detener { background: white; color: black; font-size: 1.2em; padding: 15px 40px; border: 3px solid #dc3545; cursor: pointer; font-weight: bold; }
+        .historial-baraja { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 20px; justify-content: center; border-top: 1px solid #444; padding-top: 15px; }
+        .carta-pasada { width: 60px; border: 1px solid white; border-radius: 3px; }
+        .buscador { background: #3d3d3d; padding: 15px; border-radius: 10px; margin-top: 20px; }
+        #resultadoBusqueda { margin-top: 15px; display: grid; grid-template-columns: repeat(4, 1fr); grid-gap: 5px; }
+        .mini-carta { width: 100%; border: 1px solid var(--puntos); border-radius: 3px; }
+        .acierto { border: 4px solid #ff4500 !important; box-shadow: 0 0 10px #ff4500; opacity: 1 !important; }
+        
+        /* IMPRESIÓN */
+        .hoja-impresion { background: white; width: 18cm; height: 26cm; margin: 0 auto 50px auto; padding: 0.5cm 1.5cm; color: black; page-break-after: always; box-sizing: border-box; }
+        .grid-loteria { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); grid-gap: 10px; height: 22cm; }
+        .celda { border: 1px solid #000; display: flex; height: 100%; width: 100%; overflow: hidden; }
+        .celda img { width: 100%; height: 100%; object-fit: fill; }
+
+        @media print {
+            @page { margin: 0; }
+            .sidebar, .controles-velocidad, .btn-detener, h1, h3, p, button, input { display: none !important; }
+            .contenido { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .seccion { display: none !important; }
+            #vistaImpresion { display: block !important; }
+            .hoja-impresion { margin: 0 !important; padding: 0.8cm 1.5cm !important; width: 100vw; height: 100vh; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2 style="color:var(--puntos)">Lotería Panel</h2>
+        <div class="nav-seccion">
+            <button class="btn-nav activo" onclick="cambiarVista('vistaJuego', this)">🎮 MODO JUEGO</button>
+            <button class="btn-nav" onclick="cambiarVista('vistaImpresion', this)">🖨️ MODO IMPRESIÓN</button>
+        </div>
+
+        <button class="btn btn-naranja" onclick="mezclarNuevaPartida()">🔀 NUEVA PARTIDA</button>
+        <button class="btn" style="background:#007bff; color:white;" onclick="window.print()">🖨️ IMPRIMIR CARTONES</button>
+        
+        <div class="buscador">
+            <h4>🔍 VERIFICAR FOLIO</h4>
+            <input type="number" id="folioABuscar" placeholder="Folio (1-50)" style="width:100%; padding:8px; border-radius:5px; border:none; box-sizing: border-box;">
+            <button class="btn" style="background:var(--puntos); color:black; margin-top:10px;" onclick="buscarFolio()">Verificar Ganador</button>
+            <div id="status" style="margin-top:10px; text-align:center;"></div>
+            <div id="resultadoBusqueda"></div>
+        </div>
+        <p style="font-size: 11px; color: #aaa; margin-top: 20px; text-align: center;">Ubuntu | 1500W: OK ✔️</p>
+    </div>
+
+    <div class="contenido">
+        <div id="vistaJuego" class="seccion activa">
+            <div class="mesa-juego">
+                <h1 id="tituloEstado">🎴 Lotería de Regalos</h1>
+                <p>Restantes: <span id="contador">108</span></p>
+                <img id="cartaGrande" src="imagenes/reverso.png" class="carta-actual" onerror="this.src='https://via.placeholder.com/220x330?text=REVERSO'">
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn" style="background:#6f42c1; color:white; width:auto; padding:10px 30px;" onclick="reproducirIntro()">📣 ¡CORRE Y SE VA!</button>
+                </div>
+
+                <div class="controles-velocidad">
+                    <button class="btn-vel v-lento" onclick="iniciarAutomatico(4500)">Lento</button>
+                    <button class="btn-vel v-medio" onclick="iniciarAutomatico(3500)">Medio</button>
+                    <button class="btn-vel v-rapido" onclick="iniciarAutomatico(2500)">Rápido</button>
+                </div>
+                <button id="btnStop" class="btn btn-detener" onclick="detenerAutomatico()" style="display:none;">🔴 ¡DETENER!</button>
+                <div id="historialBaraja" class="historial-baraja"></div>
+            </div>
+        </div>
+        <div id="vistaImpresion" class="seccion">
+            <div id="contenedor-cartones"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_DATOS = {};
+        for (let f = 1; f <= 50; f++) {
+            let cartasDisponibles = Array.from({length: 108}, (_, i) => i + 1);
+            let folioCartas = [];
+            let seed = f * 12345; 
+            for (let i = 0; i < 16; i++) {
+                seed = (seed * 9301 + 49297) % 233280;
+                let index = Math.floor((seed / 233280) * cartasDisponibles.length);
+                folioCartas.push(cartasDisponibles.splice(index, 1)[0]);
+            }
+            BASE_DATOS[f] = folioCartas;
+        }
+
+        let mazo = JSON.parse(localStorage.getItem('mazoJuego')) || [];
+        let cantadas = JSON.parse(localStorage.getItem('cartasCantadas')) || [];
+        let intervaloJuego = null;
+
+        function cambiarVista(id, btn) {
+            document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+            document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('activo'));
+            document.getElementById(id).classList.add('activa');
+            btn.classList.add('activo');
+        }
+
+        function mezclarNuevaPartida() {
+            detenerAutomatico();
+            mazo = Array.from({length: 108}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+            cantadas = [];
+            localStorage.setItem('mazoJuego', JSON.stringify(mazo));
+            localStorage.setItem('cartasCantadas', JSON.stringify(cantadas));
+            document.getElementById('historialBaraja').innerHTML = "";
+            document.getElementById('cartaGrande').src = "imagenes/reverso.png";
+            document.getElementById('contador').innerText = "108";
+            alert("¡Nueva baraja mezclada!");
+        }
+
+        function iniciarAutomatico(velocidad) {
+            if (mazo.length === 0) { mezclarNuevaPartida(); return; }
+            detenerAutomatico();
+            document.getElementById('btnStop').style.display = 'inline-block';
+            intervaloJuego = setInterval(() => { sacarCarta(); }, velocidad);
+        }
+
+        function detenerAutomatico() {
+            clearInterval(intervaloJuego);
+            document.getElementById('btnStop').style.display = 'none';
+        }
+
+        function sacarCarta() {
+            if (mazo.length === 0) { detenerAutomatico(); return; }
+            let carta = mazo.shift();
+            cantadas.push(carta);
+            new Audio(`audio/${carta}.mp3`).play().catch(() => {});
+            document.getElementById('cartaGrande').src = `imagenes/${carta}.png`;
+            document.getElementById('contador').innerText = mazo.length;
+            let img = document.createElement('img');
+            img.src = `imagenes/${carta}.png`;
+            img.className = 'carta-pasada';
+            document.getElementById('historialBaraja').prepend(img);
+            localStorage.setItem('mazoJuego', JSON.stringify(mazo));
+            localStorage.setItem('cartasCantadas', JSON.stringify(cantadas));
+        }
+
+        function buscarFolio() {
+            let f = parseInt(document.getElementById('folioABuscar').value);
+            let cartas = BASE_DATOS[f];
+            let display = document.getElementById('resultadoBusqueda');
+            let status = document.getElementById('status');
+            display.innerHTML = "";
+            
+            if (cartas) {
+                let aciertos = 0;
+                cartas.forEach(num => {
+                    let ya = cantadas.includes(num);
+                    if(ya) aciertos++;
+                    display.innerHTML += `<img src="imagenes/${num}.png" class="mini-carta ${ya?'acierto':''}" style="${!ya?'opacity:0.2':''}">`;
+                });
+                
+                status.innerHTML = `<h3>Aciertos: ${aciertos}/16</h3>`;
+                
+                if(aciertos === 16) {
+                    status.innerHTML += "<h2 style='color:gold; background:black; padding:5px; border-radius:5px;'>🏆 ¡LOTERÍA!</h2>";
+                    new Audio('audio/fanfarrias.mp3').play().catch(() => {});
+                } else if (aciertos >= 13) {
+                    status.innerHTML += "<p style='color:orange;'>¡Ya casi!</p>";
+                    new Audio('audio/aplausos.mp3').play().catch(() => {});
+                } else {
+                    new Audio('audio/failfara.mp3').play().catch(() => {});
+                }
+            } else { 
+                status.innerHTML = "<p style='color:red;'>Folio no válido.</p>"; 
+            }
+        }
+
+        function reproducirIntro() { new Audio('audio/intro.mp3').play().catch(() => {}); }
+
+        window.onload = () => {
+            const contenedor = document.getElementById('contenedor-cartones');
+            for (let f in BASE_DATOS) {
+                let div = document.createElement('div');
+                div.className = 'hoja-impresion';
+                div.innerHTML = `<div style='font-weight:bold;'>FOLIO: #${f.padStart(3,'0')}</div><div class='grid-loteria'>${BASE_DATOS[f].map(n => `<div class='celda'><img src='imagenes/${n}.png'></div>`).join('')}</div>`;
+                contenedor.appendChild(div);
+            }
+            cantadas.forEach(c => {
+                let img = document.createElement('img');
+                img.src = `imagenes/${c}.png`;
+                img.className = 'carta-pasada';
+                document.getElementById('historialBaraja').prepend(img);
+            });
+            if(cantadas.length > 0) document.getElementById('cartaGrande').src = `imagenes/${cantadas[cantadas.length-1]}.png`;
+            document.getElementById('contador').innerText = mazo.length;
+        }
+    </script>
+</body>
+</html>
