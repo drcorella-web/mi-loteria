@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorama Lotería Arcade</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="memorama-body">
+    <div class="contenedor-principal">
+        <div class="sidebar">
+            <h1 class="retro-title">MEMORAMA<br>LOTERÍA</h1>
+            <div class="stat-box"><span>NIVEL</span><div id="level-display">1</div></div>
+            <div class="stat-box"><span>VIDAS</span><div id="lives-display">❤️❤️❤️</div></div>
+            <div class="stat-box"><span>SANGRE</span><div id="score-display">100</div></div>
+            <div class="stat-box"><span>PUNTAJE</span><div id="puntos-display">0</div></div>
+            <div class="stat-box"><span>TIEMPO</span><div id="timer">0s</div></div>
+            
+            <button id="reset-btn">REINICIAR</button>
+
+            <div class="instrucciones">
+                <h3>MODO ARCADE:</h3>
+                <ul>
+                    <li>🔍 <b>Explora:</b> La primera vez que ves una carta es gratis.</li>
+                    <li>🧠 <b>Memoria:</b> Si fallas una que ya conocías: <b>-10 Sangre</b>.</li>
+                    <li>✨ <b>Acierto:</b> <b>+10 Puntos</b> y recuperas sangre.</li>
+                    <li>🔥 <b>Dificultad:</b> Las cartas se cierran más rápido en cada nivel.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="juego-area">
+            <div id="mensaje-flotante"></div>
+            <div id="game-board" class="grid-5x6"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

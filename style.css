@@ -1,0 +1,131 @@
+body {
+    background-color: #1a1a1a;
+    background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+    color: #fff;
+    font-family: 'Ubuntu', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.contenedor-principal {
+    display: flex;
+    flex-direction: row;
+    gap: 40px;
+    padding: 10px;
+    align-items: flex-start;
+}
+
+.sidebar {
+    background: rgba(0, 0, 0, 0.95);
+    padding: 20px;
+    border: 3px solid #00f3ff;
+    box-shadow: 0 0 15px #00f3ff;
+    text-align: center;
+    border-radius: 12px;
+    width: 200px;
+    margin-top: 50px;
+}
+
+.retro-title {
+    font-size: 1.4rem;
+    color: #ff0055;
+    text-shadow: 0 0 8px #ff0055;
+    margin-bottom: 15px;
+}
+
+.stat-box {
+    margin-bottom: 8px;
+    border-bottom: 1px solid #333;
+    padding: 5px;
+}
+
+.stat-box span { font-size: 0.7rem; color: #00f3ff; text-transform: uppercase; }
+
+#level-display, #timer, #score-display, #puntos-display {
+    font-size: 1.7rem;
+    color: #ffeb3b;
+    font-family: monospace;
+}
+
+#reset-btn {
+    width: 100%;
+    padding: 10px;
+    background: #ff0055;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+/* DISEÑO DE REGLAS RETRO */
+.instrucciones {
+    text-align: left;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #555;
+}
+
+.instrucciones h3 {
+    font-size: 0.8rem;
+    color: #ff0055;
+    margin-bottom: 8px;
+}
+
+.instrucciones ul {
+    padding-left: 15px;
+    margin: 0;
+}
+
+.instrucciones li {
+    font-size: 0.7rem;
+    color: #bbb;
+    margin-bottom: 5px;
+    line-height: 1.2;
+}
+
+.juego-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#mensaje-flotante {
+    height: 50px;
+    color: #ff0055;
+    font-weight: bold;
+    font-size: 1.6rem;
+    text-shadow: 0 0 10px #ff0055;
+}
+
+.grid-5x6 {
+    display: grid;
+    grid-template-columns: repeat(6, 105px);
+    grid-template-rows: repeat(5, 145px);
+    grid-gap: 15px;
+    margin-top: -10px;
+}
+
+.card { width: 105px; height: 145px; perspective: 1000px; }
+.card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.4s; transform-style: preserve-3d; }
+.card.flipped .card-inner { transform: rotateY(180deg); }
+.card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; }
+
+.card-front {
+    background-image: url('imagenes/reverso.png');
+    background-size: cover;
+    background-position: center;
+    border: 2px solid #333;
+}
+
+.card-back {
+    background: white;
+    transform: rotateY(180deg);
+    border: 2px solid #fff;
+}
+
+.card-back img { width: 100%; height: 100%; object-fit: contain; }
